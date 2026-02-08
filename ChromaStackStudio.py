@@ -26,22 +26,21 @@ ALPHA_THRESHOLD = 128    # PNG透明度阈值 (0-255)，低于此值视为透明
 BACKING_REFLECTANCE = np.array([0.94, 0.94, 0.94]) # 底座(白色PLA)的反射率
 
 # 文件路径 (请修改为你的带透明背景的PNG)
-INPUT_IMAGE = "testpic/wp004.webp"
+INPUT_IMAGE = "path/to/your/image.png"
 INVENTORY_FILE = "my_filament.json"
 TARGET_WIDTH_MM = 80
 
 # 选料配置 (Slot 1 必须是底座材料，如白色)
 SELECTED_FILAMENT_NAMES = [
-    "Jade White",       # Slot 1 (Base Layer)
-    # "White",
-    "Black",             # Slot 2
-    "Sunflower Yellow",  # Slot 3
-    # "Red",               # Slot 4
-    "Cyan",              # Slot 5
-    "Magenta",            # Slot 6
-    "Creativity Blue",     # Slot 7
-    "Special Gray",         # Slot 8
-    "Brown"
+    # 此处修改为你自己的耗材名称！
+    "Jade White",           # Slot 1 (Base Layer)
+    "Black",                # Slot 2
+    "Sunflower Yellow",     # Slot 3
+    # "Red",                # Slot 4
+    "Cyan",                 # Slot 5
+    "Magenta",              # Slot 6
+    # "Creativity Blue",      # Slot 7
+    "Brown"                 # Slot 8
 ]
 
 # ================= 1. 数据加载模块 =================
@@ -168,8 +167,7 @@ def visualize_gamut(lut_colors):
     print("\n📊 正在生成色域预览图...")
     colors_norm = lut_colors / 255.0
     
-    # 1. 3D 散点图 (保持不变)
-    fig = plt.figure(figsize=(14, 6))
+    fig = plt.figure("Gamut Analysis", figsize=(14, 6))
     ax1 = fig.add_subplot(121, projection='3d')
     # 为了防止点太多导致卡顿，如果点超过 5000 个，随机采样显示
     if len(colors_norm) > 5000:
@@ -182,7 +180,7 @@ def visualize_gamut(lut_colors):
     ax1.set_title(f'RGB Space Distribution ({len(lut_colors)} colors)')
     ax1.set_xlim(0, 1); ax1.set_ylim(0, 1); ax1.set_zlim(0, 1)
 
-    # 2. 2D 色板图 (核心修复)
+    # 2. 2D 色板图
     ax2 = fig.add_subplot(122)
     
     # 按色相排序
@@ -197,24 +195,21 @@ def visualize_gamut(lut_colors):
     
     # 如果颜色数量填不满正方形，用白色填充剩余部分 zeros是黑色
     if target_size > num_colors:
-        padding = np.ones((target_size - num_colors, 3)) # 黑色填充
+        padding = np.ones((target_size - num_colors, 3)) 
         sorted_colors_padded = np.vstack([sorted_colors, padding])
     else:
         sorted_colors_padded = sorted_colors
 
     # Reshape 为动态计算出的边长
     grid_img = sorted_colors_padded.reshape(side_len, side_len, 3)
-    # ---------------------
 
     ax2.imshow(grid_img)
     ax2.set_title(f'Available Palette\nSorted by Hue (Grid: {side_len}x{side_len})')
     ax2.axis('off')
     
     plt.tight_layout()
-    try:
-        plt.show(block=False)
-    except:
-        pass # 防止无 GUI 环境报错
+    plt.draw()
+    plt.pause(0.1) 
     os.makedirs("debug_output", exist_ok=True)
     plt.savefig("debug_output/gamut_check.png")
     print("📈 色域图已保存为 debug_output/gamut_check.png")
@@ -363,6 +358,15 @@ def generate_preview_image_rgba(lut_colors, mapped_indices, width, height, alpha
     rgb_data = lut_colors[mapped_indices] 
     rgba_data = np.dstack((rgb_data, alpha_channel)).astype(np.uint8)
     preview_img = Image.fromarray(rgba_data, 'RGBA')
+    
+    plt.figure("Final Simulation Preview", figsize=(10, 10))
+    plt.imshow(preview_img)
+    plt.axis('off') # 关闭坐标轴
+    plt.title("Simulation Result (Close this window to continue)")
+
+    print("⏸️  预览已显示，请检查。关闭预览窗口后将开始生成 3MF 文件...")
+    plt.show(block=True)
+
     os.makedirs("Output", exist_ok=True)
     preview_img.save(os.path.join("Output", filename))
     return preview_img
@@ -656,7 +660,7 @@ def main():
 
     # --- 导出 ---
     if len(scene.geometry) > 0:
-        output_filename = "ChromaStack_Project_update.3mf"
+        output_filename = "ChromaStack_Project.3mf"
         print(f"💾 正在保存 3MF 文件: {output_filename} ...")
         scene.export(os.path.join("Output", output_filename))
         print("✅ 保存成功！请将 .3mf 文件拖入 Bambu Studio / Orca Slicer。")

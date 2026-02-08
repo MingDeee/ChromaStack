@@ -7,7 +7,7 @@
 *Just print what you see*
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-![Python](https://img.shields.io/badge/Python-3.8%2B-green)  
+![Python](https://img.shields.io/badge/Python-3.12%2B-green)  
 [英文文档 / English Documentation](README_en.md)
 
 </div>
@@ -88,7 +88,10 @@ selected_filaments = [...]
 ```
 
 ### Step 4: 切片与打印 (Slicing)
-将生成的 `.3mf` 导入切片软件（如 Orca Slicer / Bambu Studio），注意调整以下参数：
+将生成的 `.3mf` 导入切片软件（如 Orca Slicer / Bambu Studio），注意调整以下参数：  
+请务必先合并对象再切片，记得切换耗材的颜色
+![choose yes](res/img/yes.png)
+![select color](res/img/color_select.png)
 
 * **层高 (Layer Height)**：必须与脚本中设置的一致（0.08mm 或 0.1mm）。
 * **首层层高 (First Layer)**：按需修改（0.08mm 或 0.1mm）。

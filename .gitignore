@@ -6,8 +6,13 @@ __pycache__/
 
 output/
 debug_output/
+tmp/
 
 testpic/
 
 my_filament.json
 my_filament_PETG.json
+
+.venv/
+.trae/
+.idea/

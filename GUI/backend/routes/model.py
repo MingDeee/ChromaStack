@@ -320,9 +320,6 @@ def colorize_image():
         file.save(file_path)
         
         # 导入并执行自动配色
-        import sys
-        sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-        
         from AutoSelector import extract_image_features
         
         # 执行颜色提取
@@ -430,9 +427,6 @@ def generate_preview():
         layer_height = float(request.form.get('layer_height', config.get('layer_height', 0.08)))
         
         # 导入必要的模块
-        import sys
-        sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-        
         from ChromaStackStudio import VirtualPhysics, rgb_to_lab, load_inventory, generate_regions_felzenszwalb, region_based_rematching
         from scipy.spatial import KDTree
         
@@ -570,9 +564,6 @@ def generate_model():
         is_double_sided = request.form.get('is_double_sided', str(config.get('is_double_sided', True))).lower() == 'true'
         
         # 导入必要的模块
-        import sys
-        sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-        
         from ChromaStackStudio import VirtualPhysics, load_inventory
         
         # 加载耗材库

@@ -7,7 +7,7 @@
 import json
 from pathlib import Path
 from flask import Blueprint, request, jsonify
-from config import Config
+from ..config import Config
 
 # 创建蓝图
 filament_bp = Blueprint('filament', __name__)

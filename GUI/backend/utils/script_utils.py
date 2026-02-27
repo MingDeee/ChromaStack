@@ -7,13 +7,10 @@
 import sys
 from io import StringIO
 from pathlib import Path
-from config import Config
+from ..config import Config
 
-# 添加校准脚本所在目录到Python路径
-sys.path.append(str(Config.CALIBRATION_SCRIPT.parent))
-
-# 导入校准脚本的函数
-import KS_calibration
+# 从filament_cali模块直接导入校准脚本函数
+from filament_cali import KS_calibration
 
 
 def run_calibration_script(image_path, config=None):

@@ -5,7 +5,7 @@
 """
 
 from flask import Blueprint, request, jsonify
-from utils.file_utils import allowed_file, save_uploaded_file
+from ..utils.file_utils import allowed_file, save_uploaded_file
 
 # 创建蓝图
 upload_bp = Blueprint('upload', __name__)

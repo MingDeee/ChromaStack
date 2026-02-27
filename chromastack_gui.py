@@ -11,11 +11,11 @@ import threading
 import time
 from pathlib import Path
 
-# 添加后端目录到Python路径，确保backend模块可以被正确导入
-sys.path.append(str(Path(__file__).parent / 'backend'))
+# 获取当前脚本所在目录（项目根目录）
+current_dir = Path(__file__).parent
 
 # 导入Flask应用
-from backend.app import app
+from GUI.backend.app import app
 
 
 def start_backend():
@@ -31,23 +31,20 @@ def main():
     """
     主函数，启动Pywebview应用
     """
-    # 获取当前脚本所在目录
-    current_dir = Path(__file__).parent
-    
     # 检查dist目录和HTML文件是否存在
-    frontend_dir = current_dir / "frontend"
+    frontend_dir = current_dir / "GUI" / "frontend"
     dist_dir = frontend_dir / "dist"
     html_file = dist_dir / "index.html"
     
     # 检查dist目录和HTML文件是否存在
     if not dist_dir.exists():
         print(f"错误：dist目录 {dist_dir} 不存在！")
-        print("请先进入frontend目录运行 npm run build 编译Vue应用")
+        print("请先进入GUI/frontend目录运行 npm run build 编译Vue应用")
         sys.exit(1)
     
     if not html_file.exists():
         print(f"错误：HTML文件 {html_file} 不存在！")
-        print("请先进入frontend目录运行 npm run build 编译Vue应用")
+        print("请先进入GUI/frontend目录运行 npm run build 编译Vue应用")
         sys.exit(1)
     
     # 使用多线程启动后端服务

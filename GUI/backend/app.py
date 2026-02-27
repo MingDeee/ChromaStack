@@ -7,16 +7,13 @@ ChromaStack GUI后端主应用入口
 import sys
 from pathlib import Path
 
-# 添加当前目录到Python路径，确保模块可以被正确导入
-sys.path.append(str(Path(__file__).parent))
-
 from flask import Flask
-from routes.upload import upload_bp
-from routes.calibration import calibration_bp
-from routes.filament import filament_bp
-from routes.static import static_bp
-from routes.config import config_bp
-from routes.model import model_bp
+from .routes.upload import upload_bp
+from .routes.calibration import calibration_bp
+from .routes.filament import filament_bp
+from .routes.static import static_bp
+from .routes.config import config_bp
+from .routes.model import model_bp
 
 # 创建Flask应用
 app = Flask(__name__)

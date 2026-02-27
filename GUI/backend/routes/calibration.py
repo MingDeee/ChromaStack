@@ -6,7 +6,7 @@
 
 from pathlib import Path
 from flask import Blueprint, request, jsonify
-from utils.script_utils import run_calibration_script
+from ..utils.script_utils import run_calibration_script
 
 # 创建蓝图
 calibration_bp = Blueprint('calibration', __name__)

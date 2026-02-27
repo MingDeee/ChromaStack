@@ -5,7 +5,7 @@
 """
 
 from flask import Blueprint, send_from_directory
-from config import Config
+from ..config import Config
 from pathlib import Path
 
 # 创建蓝图

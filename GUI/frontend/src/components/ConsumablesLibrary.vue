@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="jsx">
 import { ref, reactive, onMounted } from 'vue'
 import { MessagePlugin } from 'tdesign-vue-next'
 
@@ -16,34 +16,42 @@ const currentFilament = ref(null)
 const formData = reactive({
   Name: '',
   Type: 'PLA',
-  FILAMENT_K: [0, 0, 0],
-  FILAMENT_S: [0, 0, 0]
+  FILAMENT_K: '[0, 0, 0]',
+  FILAMENT_S: '[0, 0, 0]'
 })
+
+// 表格分页配置
+const pagination = {
+  total: 0,
+  pageSize: 10,
+  current: 1,
+  showJumper: true,
+  showSizeChanger: true,
+  pageSizeOptions: ['10', '20', '50', '100']
+}
 
 // 表格列配置
 const columns = [
-  { title: '名称', dataKey: 'Name', width: 150, align: 'left' },
-  { title: '类型', dataKey: 'Type', width: 100, align: 'left' },
+  { title: '名称', colKey: 'Name', width: 150, align: 'left' },
+  { title: '类型', colKey: 'Type', width: 100, align: 'left' },
   { 
     title: 'FILAMENT_K', 
-    dataKey: 'FILAMENT_K', 
+    colKey: 'FILAMENT_K', 
     width: 200,
-    align: 'left',
-    ellipsis: true
+    align: 'left'
   },
   { 
     title: 'FILAMENT_S', 
-    dataKey: 'FILAMENT_S', 
+    colKey: 'FILAMENT_S', 
     width: 200,
-    align: 'left',
-    ellipsis: true
+    align: 'left'
   },
   { 
     title: '操作', 
-    dataKey: 'actions', 
+    colKey: 'actions', 
     width: 180,
     align: 'left',
-    fixed: 'right'
+    fixed: 'right',
   }
 ]
 
@@ -71,6 +79,9 @@ const fetchFilaments = async () => {
         FILAMENT_S: JSON.stringify(filament.FILAMENT_S)
       }
     })
+    
+    // 更新分页总数
+    pagination.total = filaments.value.length
   } catch (error) {
     alert(`获取耗材列表失败: ${error.message}`)
   } finally {
@@ -83,8 +94,8 @@ const openAddDialog = () => {
   // 重置表单
   formData.Name = ''
   formData.Type = 'PLA'
-  formData.FILAMENT_K = [0, 0, 0]
-  formData.FILAMENT_S = [0, 0, 0]
+  formData.FILAMENT_K = '[0, 0, 0]'
+  formData.FILAMENT_S = '[0, 0, 0]'
   isAddDialogVisible.value = true
 }
 
@@ -94,8 +105,9 @@ const openEditDialog = (filament) => {
   currentFilament.value = filament
   formData.Name = filament.Name
   formData.Type = filament.Type
-  formData.FILAMENT_K = [...filament.FILAMENT_K]
-  formData.FILAMENT_S = [...filament.FILAMENT_S]
+  // 直接使用字符串表示，不使用JSON.stringify，避免添加引号
+  formData.FILAMENT_K = `${filament.FILAMENT_K}`
+  formData.FILAMENT_S = `${filament.FILAMENT_S}`
   isEditDialogVisible.value = true
 }
 
@@ -141,12 +153,33 @@ const addFilament = async () => {
   }
   
   try {
+    // 验证并转换FILAMENT_K和FILAMENT_S为数组
+    let parsedK, parsedS
+    try {
+      parsedK = JSON.parse(formData.FILAMENT_K)
+      parsedS = JSON.parse(formData.FILAMENT_S)
+      
+      if (!Array.isArray(parsedK) || !Array.isArray(parsedS)) {
+        throw new Error('FILAMENT_K和FILAMENT_S必须是数组格式')
+      }
+    } catch (parseError) {
+      alert(`数据格式错误: ${parseError.message}`)
+      return
+    }
+    
+    // 准备提交数据
+    const submitData = {
+      ...formData,
+      FILAMENT_K: parsedK,
+      FILAMENT_S: parsedS
+    }
+    
     const response = await fetch('http://localhost:5000/filaments', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(formData)
+      body: JSON.stringify(submitData)
     })
     
     const data = await response.json()
@@ -182,12 +215,33 @@ const updateFilament = async () => {
   }
   
   try {
+    // 验证并转换FILAMENT_K和FILAMENT_S为数组
+    let parsedK, parsedS
+    try {
+      parsedK = JSON.parse(formData.FILAMENT_K)
+      parsedS = JSON.parse(formData.FILAMENT_S)
+      
+      if (!Array.isArray(parsedK) || !Array.isArray(parsedS)) {
+        throw new Error('FILAMENT_K和FILAMENT_S必须是数组格式')
+      }
+    } catch (parseError) {
+      alert(`数据格式错误: ${parseError.message}`)
+      return
+    }
+    
+    // 准备提交数据
+    const submitData = {
+      ...formData,
+      FILAMENT_K: parsedK,
+      FILAMENT_S: parsedS
+    }
+    
     const response = await fetch(`http://localhost:5000/filaments/${encodeURIComponent(currentFilament.value.Name)}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(formData)
+      body: JSON.stringify(submitData)
     })
     
     const data = await response.json()
@@ -257,53 +311,26 @@ onMounted(() => {
             
             <!-- 耗材列表表格 -->
             <div>
-              <div v-if="loading">加载中...</div>
-              <div v-else>
-                <div class="simple-table-container">
-                  <table class="simple-table">
-                    <thead>
-                      <tr>
-                        <th>名称</th>
-                        <th>类型</th>
-                        <th>FILAMENT_K</th>
-                        <th>FILAMENT_S</th>
-                        <th>操作</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(filament, index) in filaments" :key="index">
-                        <td>{{ filament.Name }}</td>
-                        <td>{{ filament.Type }}</td>
-                        <td>{{ filament.FILAMENT_K }}</td>
-                        <td>{{ filament.FILAMENT_S }}</td>
-                        <td>
-                          <div class="action-buttons">
-                            <t-button 
-                              size="small" 
-                              type="primary" 
-                              theme="outline" 
-                              @click="openEditDialog(filament)"
-                            >
-                              修改
-                            </t-button>
-                            <t-button 
-                              size="small" 
-                              type="danger" 
-                              theme="outline" 
-                              @click="openDeleteDialog(filament)"
-                            >
-                              删除
-                            </t-button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr v-if="filaments.length === 0">
-                        <td colspan="5" style="text-align: center;">耗材列表为空</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <t-table
+                :data="filaments"
+                :columns="columns"
+                :pagination="pagination"
+                :loading="loading"
+                size="small"
+                row-key="Name"
+              >
+                <template #actions="{ row }">
+                  <div class="table-operations" style="display: flex; gap: 8px;">
+                    <t-link theme="primary" hover="color" @click="openEditDialog(row)">
+                      修改
+                    </t-link>
+                    <span style="color: #d9d9d9;">|</span>
+                    <t-link theme="danger" hover="color" @click="openDeleteDialog(row)">
+                      删除
+                    </t-link>
+                  </div>
+                </template>
+              </t-table>
             </div>
           </div>
         </div>
@@ -311,107 +338,93 @@ onMounted(() => {
     </div>
     
     <!-- 新增/修改对话框 -->
-    <div v-if="isAddDialogVisible || isEditDialogVisible" class="dialog-overlay">
-      <div class="dialog">
-        <div class="dialog-header">
-          <h3>{{ isAddDialogVisible ? '新增耗材' : '修改耗材' }}</h3>
-          <button class="close-btn" @click="closeAllDialogs">×</button>
-        </div>
-        <div class="dialog-content">
-          <form class="simple-form">
-            <div class="form-item">
-              <label>耗材名称</label>
-              <input 
-                type="text" 
-                v-model="formData.Name" 
-                placeholder="请输入耗材名称"
-                maxlength="50"
-              >
-            </div>
-            <div class="form-item">
-              <label>耗材类型</label>
-              <select v-model="formData.Type">
-                <option value="PLA">PLA</option>
-                <option value="PETG">PETG</option>
-              </select>
-            </div>
-            <div class="form-item">
-              <label>FILAMENT_K</label>
-              <div class="array-inputs">
-                <input 
-                  type="number" 
-                  step="0.0001" 
-                  v-model.number="formData.FILAMENT_K[0]" 
-                  placeholder="K1"
-                >
-                <input 
-                  type="number" 
-                  step="0.0001" 
-                  v-model.number="formData.FILAMENT_K[1]" 
-                  placeholder="K2"
-                >
-                <input 
-                  type="number" 
-                  step="0.0001" 
-                  v-model.number="formData.FILAMENT_K[2]" 
-                  placeholder="K3"
-                >
-              </div>
-            </div>
-            <div class="form-item">
-              <label>FILAMENT_S</label>
-              <div class="array-inputs">
-                <input 
-                  type="number" 
-                  step="0.0001" 
-                  v-model.number="formData.FILAMENT_S[0]" 
-                  placeholder="S1"
-                >
-                <input 
-                  type="number" 
-                  step="0.0001" 
-                  v-model.number="formData.FILAMENT_S[1]" 
-                  placeholder="S2"
-                >
-                <input 
-                  type="number" 
-                  step="0.0001" 
-                  v-model.number="formData.FILAMENT_S[2]" 
-                  placeholder="S3"
-                >
-              </div>
-            </div>
-          </form>
-        </div>
-        <div class="dialog-footer">
-          <button class="cancel-btn" @click="closeAllDialogs">取消</button>
-          <button 
-            class="confirm-btn" 
+    <!-- 新增/修改耗材对话框 -->
+    <t-dialog
+      :visible="isAddDialogVisible || isEditDialogVisible"
+      :title="isAddDialogVisible ? '新增耗材' : '修改耗材'"
+      @close="closeAllDialogs"
+      width="650px"
+      :header-style="{ fontSize: '18px', fontWeight: '600' }"
+      :body-style="{ padding: '24px' }"
+    >
+      <t-form 
+        class="t-form-layout" 
+        :label-width="120"
+        style="max-width: 100%;"
+      >
+        <t-form-item label="耗材名称" required>
+          <t-input 
+            v-model="formData.Name" 
+            placeholder="请输入耗材名称"
+            maxlength="50"
+            :style="{ width: '100%', maxWidth: '400px' }"
+          />
+        </t-form-item>
+        <t-form-item label="耗材类型" required>
+          <t-select 
+            v-model="formData.Type" 
+            placeholder="请选择耗材类型"
+            :style="{ width: '100%', maxWidth: '400px' }"
+          >
+            <t-option value="PLA" label="PLA" />
+            <t-option value="PETG" label="PETG" />
+          </t-select>
+        </t-form-item>
+        <t-form-item label="FILAMENT_K" required>
+          <t-input 
+            v-model="formData.FILAMENT_K" 
+            placeholder="请输入FILAMENT_K数组，例如: [0.1, 0.2, 0.3]"
+            :style="{ width: '100%', maxWidth: '400px' }"
+          />
+        </t-form-item>
+        <t-form-item label="FILAMENT_S" required>
+          <t-input 
+            v-model="formData.FILAMENT_S" 
+            placeholder="请输入FILAMENT_S数组，例如: [0.4, 0.5, 0.6]"
+            :style="{ width: '100%', maxWidth: '400px' }"
+          />
+        </t-form-item>
+      </t-form>
+      <template #footer>
+        <div style="display: flex; gap: 16px; justify-content: flex-end; padding: '16px 24px 24px';">
+          <t-button @click="closeAllDialogs" :style="{ padding: '6px 20px', fontSize: '14px' }">取消</t-button>
+          <t-button 
+            type="primary" 
             @click="isAddDialogVisible ? addFilament() : updateFilament()"
+            :style="{ padding: '6px 20px', fontSize: '14px' }"
           >
             确认
-          </button>
+          </t-button>
         </div>
-      </div>
-    </div>
+      </template>
+    </t-dialog>
     
     <!-- 删除确认对话框 -->
-    <div v-if="isDeleteDialogVisible" class="dialog-overlay">
-      <div class="dialog">
-        <div class="dialog-header">
-          <h3>删除确认</h3>
-          <button class="close-btn" @click="closeAllDialogs">×</button>
-        </div>
-        <div class="dialog-content">
-          <p>确定要删除耗材 <strong>{{ currentFilament?.Name }}</strong> 吗？</p>
-          <p>此操作不可恢复，请谨慎执行。</p>
-        </div>
-        <div class="dialog-footer">
-          <button class="cancel-btn" @click="closeAllDialogs">取消</button>
-          <button class="delete-confirm-btn" @click="deleteFilament()">确认删除</button>
-        </div>
+    <t-dialog
+      :visible="isDeleteDialogVisible"
+      title="删除确认"
+      @close="closeAllDialogs"
+      width="350px"
+      :header-style="{ fontSize: '18px', fontWeight: '600' }"
+      :body-style="{ padding: '24px' }"
+    >
+      <div style="padding: 20px 0; font-size: '14px'; line-height: '1.5';">
+        <p style="margin: '0 0 12px 0';">确定要删除耗材 <strong>{{ currentFilament?.Name }}</strong> 吗？</p>
+        <p style="color: #ff4d4f; margin: '0'; font-weight: '500';">此操作不可恢复，请谨慎执行。</p>
       </div>
-    </div>
+      <template #footer>
+        <div style="display: flex; gap: 16px; justify-content: flex-end;">
+          <t-button @click="closeAllDialogs" :style="{ padding: '6px 20px', fontSize: '14px' }">取消</t-button>
+          <t-button 
+            type="danger" 
+            @click="deleteFilament()"
+            :style="{ padding: '6px 20px', fontSize: '14px' }"
+          >
+            确认删除
+          </t-button>
+        </div>
+      </template>
+    </t-dialog>
   </div>
 </template>
 
